@@ -12,6 +12,7 @@ services:
     command: nodemon app.js
     volumes:
       - data:/opt/esaude/data
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./:/opt/esaude/api
 networks:
   network:

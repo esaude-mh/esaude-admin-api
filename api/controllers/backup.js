@@ -3,8 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const constants = require('../constants');
-const mysqldump = require('mysqldump');
-const archiver = require('archiver');
+const Docker = require('dockerode');
 
 module.exports = {
 
@@ -34,64 +33,74 @@ module.exports = {
 
   // return a specific backup file
   get: (req, res) => {
-    res.json({
-      neverGonna: 'letYouDown'
-    });
+    const backup = req.swagger.params.filename.value;
+
+    if (fs.existsSync(constants.databaseBackupPath + path.sep + backup)) {
+      res.download(constants.databaseBackupPath + path.sep + backup)
+    } else {
+      res.status(500);
+      res.json({
+        message: 'Backup file not found'
+      });
+    }
   },
 
   // create a backup
   create: (req, res) => {
-    let date = new Date();
-    let message = 'Backup successfully created';
 
-    let dumpfile = 'esaude-platform-backup-' +
-      `${('0' + date.getDate()).slice(-2)}-` +
-      `${('0' + (date.getMonth() + 1)).slice(-2)}-` +
-      `${date.getFullYear()}-` +
-      `${('0' + date.getHours()).slice(-2)}h` +
-      `${('0' + date.getMinutes()).slice(-2)}m` +
-      `${('0' + date.getSeconds()).slice(-2)}s.sql`;
+    const docker = new Docker({
+      socketPath: constants.dockerSocketPath
+    });
 
-    mysqldump({
-      host: constants.esaudeDatabaseHost,
-      user: constants.esaudeDatabaseUser,
-      password: constants.esaudeDatabasePass,
-      database: constants.esaudeDatabaseName,
-      ifNotExist: true,
-      dest: constants.databaseBackupPath + path.sep + dumpfile
-    }, function(err) {
+    const esaudePlatformMySQL = docker.getContainer(constants.esaudeDatabaseHost);
+
+    const execOptions = {
+      Cmd: ['backup'],
+      AttachStdout: true,
+      AttachStderr: true
+    };
+
+    const respond = function(err) {
+      let message = 'Backup successfully created';
       if (err) {
-        message = err.message;
+        console.log(err);
         res.status(500);
-      } else {
-        // compress the dump
-        const output = fs.createWriteStream(constants.databaseBackupPath + path.sep + dumpfile + '.zip');
-        const archive = archiver('zip', {
-          zlib: {
-            level: 9
-          } // Sets the compression level.
-        });
-
-        archive.on('error', function(err) {
-          message = err.message;
-          res.status(500);
-        });
-
-        archive.pipe(output);
-
-        archive.file(constants.databaseBackupPath + path.sep + dumpfile);
-
-        archive.finalize();
-
-        // delete uncompressed dump
-        output.on('close', function() {
-          fs.unlinkSync(constants.databaseBackupPath + path.sep + dumpfile);
-        });
+        message = err.message;
       }
 
       res.json({
         message: message
       });
-    })
+    };
+
+    esaudePlatformMySQL.exec(execOptions, (err, exec) => {
+      if (err)
+        return respond(err);
+
+      exec.start((err, stream) => {
+        if (err)
+          return respond(err);
+
+        esaudePlatformMySQL.modem.demuxStream(stream, process.stdout, process.stderr);
+
+        stream.on('end', () => {
+          exec.inspect(function(err, data) {
+            if (!err && !data.Running) {
+              if (err)
+                return respond(err);
+
+              if (data.ExitCode == 0) {
+                return respond();
+              } else {
+                return respond({
+                  message: `Backup exited with response code ${data.ExitCode}`
+                })
+              }
+            }
+          });
+        });
+
+      });
+    });
   }
 };

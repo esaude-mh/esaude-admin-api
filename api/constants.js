@@ -9,5 +9,7 @@ module.exports = {
   esaudeDatabaseHost: 'esaude-platform-mysql',
   esaudeDatabaseName: 'openmrs',
   esaudeDatabaseUser: 'esaude',
-  esaudeDatabasePass: 'eSaudeUserMySQLPassword'
+  esaudeDatabasePass: 'eSaudeUserMySQLPassword',
+
+  dockerSocketPath: '/var/run/docker.sock'
 }

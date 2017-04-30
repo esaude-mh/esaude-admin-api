@@ -69,6 +69,8 @@ paths:
     x-swagger-router-controller: backup
     get:
       description: Retrieve backup file
+      produces:
+        - application/zip
       operationId: get
       parameters:
         - name: filename
