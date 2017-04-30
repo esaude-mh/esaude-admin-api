@@ -1,0 +1,19 @@
+version: "3"
+services:
+  api:
+    build: .
+    image: esaude-admin-api
+    ports:
+      - "2580:2580"
+    networks:
+      - network
+    hostname: esaude-admin-api
+    container_name: esaude-admin-api
+    command: nodemon app.js
+    volumes:
+      - data:/opt/esaude/data
+      - ./:/opt/esaude/api
+networks:
+  network:
+volumes:
+  data:
