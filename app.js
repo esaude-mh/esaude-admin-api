@@ -2,7 +2,6 @@
 
 const SwaggerExpress = require('swagger-express-mw');
 const app = require('express')();
-const network = require('network');
 
 module.exports = app; // for testing
 
