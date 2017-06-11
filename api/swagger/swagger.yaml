@@ -12,6 +12,20 @@ consumes:
 produces:
   - application/json
 paths:
+  /app:
+    x-swagger-router-controller: app
+    get:
+      description: Retrieve containers
+      operationId: getAllApps
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/AllAppsResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /about:
     x-swagger-router-controller: about
     get:
@@ -134,65 +148,84 @@ definitions:
               type: number
             created:
               type: string
-  AllContainersResponse:
+  AppResponse:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      version:
+        type: string
+      containers:
+        type: array
+        items:
+          $ref: "#/definitions/ContainerResponse"    
+  AllAppsResponse:
     type: array
     items:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        image:
+      $ref: "#/definitions/AppResponse"
+  ContainerResponse:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      image:
+        type: object
+        properties:
+          registry:
+            type: string
+          name:
+            type: string
+          version:
+            type: string
+      ports:
+        type: array
+        items:
           type: object
           properties:
-            registry:
+            ip:
+              type: string
+            private:
+              type: number
+            public:
+              type: number
+            protocol:
+              type: string
+      networks:
+        type: array
+        items:
+          type: string
+      mounts:
+        type: array
+        items:
+          type: object
+          properties:
+            type:
               type: string
             name:
               type: string
-            version:
+            source:
               type: string
-        ports:
-          type: array
-          items:
-            type: object
-            properties:
-              ip:
-                type: string
-              private:
-                type: number
-              public:
-                type: number
-              protocol:
-                type: string
-        networks:
-          type: array
-          items:
+            destination:
+              type: string
+      created:
+        type: object
+        properties:
+          timestamp:
+            type: number
+          display:
             type: string
-        mounts:
-          type: array
-          items:
-            type: object
-            properties:
-              type:
-                type: string
-              name:
-                type: string
-              source:
-                type: string
-              destination:
-                type: string
-        created:
-          type: object
-          properties:
-            timestamp:
-              type: number
-            display:
-              type: string
-        state:
-          type: string
-        status:
-          type: string
+      state:
+        type: string
+      status:
+        type: string
+  AllContainersResponse:
+    type: array
+    items:
+      $ref: "#/definitions/ContainerResponse"
   ErrorResponse:
     required:
       - message
