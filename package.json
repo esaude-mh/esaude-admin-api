@@ -28,7 +28,7 @@
     "dockerode": "^2.4.3",
     "express": "^4.12.3",
     "moment": "^2.18.1",
-    "swagger-express-mw": "^0.1.0"
+    "swagger-express-mw": "^0.7.0"
   },
   "devDependencies": {
     "istanbul": "^0.4.5",
